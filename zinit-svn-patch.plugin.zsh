@@ -1,7 +1,6 @@
 #!/usr/bin/env zsh
 
 (( ${+functions[.zinit-mirror-using-svn]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-install.zsh"
-(( ${+functions[.zinit-update-or-status-snippet]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-autoload.zsh"
 # FUNCTION: .zinit-mirror-using-svn (patched) [[[
 # Used to clone subdirectories from Github. If in update mode
 # (see $2), then invokes `git pull', in normal mode invokes
@@ -79,6 +78,8 @@ fi
 return $?
 }
 # ]]]
+if (( ${ZINI_SVN_PATCH_STATUS:-1} )); then
+(( ${+functions[.zinit-update-or-status-snippet]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-autoload.zsh"
 # FUNCTION: .zinit-update-or-status-snippet (patch) [[[
 #
 # Implements update or status operation for snippet given by URL.
@@ -125,5 +126,6 @@ return $?
   return $retval
 }
 # ]]]
+fi
 
 # vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker
