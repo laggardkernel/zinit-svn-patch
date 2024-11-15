@@ -1,14 +1,22 @@
 # zinit-svn-patch
 
-This script patches/overrides `.zinit-mirror-using-svn()` (subfolders download,
-update) to redirect `svn` operation to `git` sparse-checkout.
+This plugin provide patches for
 
-It makes `zinit ice svn` work again.
+- `.zinit-mirror-using-svn()` (for downloading and updating subfolders)
+  redirects `svn` operations to `git` sparse-checkout.
+- `.zinit-update-or-status-snippet` fixs `zinit status snippet-name`.
+
+These patches restore functionality for `zinit ice svn`.
 
 ```sh
 zinit ice svn
 zinit snippet OMZ::plugins/fancy-ctrl-z
 ```
 
-NOTE: `zinit status` for subfolder snippets is still broken, not being patched
-yet.
+NOTE:
+
+- `zinit self-update` triggers a re`source` of
+  `$ZINIT[BIN_DIR]/zinit*.zsh` files, which reverts pathces applied here.
+- `zinit status`, namedly `zinit status --all`, triggers a `self-update` before
+  checking all plugins. So the same revert occurs, and `zinit status` for
+  all plugins will not work as expected.
