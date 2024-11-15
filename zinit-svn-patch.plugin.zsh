@@ -15,6 +15,12 @@
 setopt localoptions extendedglob warncreateglobal
 local url="$1" update="$2" directory="$3" git_url="${url%%/trunk*}" subfolder="${url#*/trunk/}"
 
+# In version 0580db (2020-07-23), ZINIT_ICE was renamed to ICE.
+# Since I'm using an older version of zinit, this code is written
+# to be compatible with both versions, before and after the rename.
+local -A ice
+(( ${+ICE} )) && ice=("${(kv)ICE[@]}") || ice=("${(kv)ZINIT_ICE[@]}")
+
 if [[ "$update" = "-t" ]]; then
   # from .zinit-self-update(), .zinit-update-or-status()
   (
@@ -34,7 +40,7 @@ if [[ "$update" = "-u" && -d "$directory" && -d "$directory/.git" ]]; then
   (
     () { setopt localoptions noautopushd; builtin cd -q "$directory"; }
     command git reset --hard HEAD && command git clean -df && \
-    command git pull --no-stat ${=ZINIT_ICE[pullopts]:---ff-only} origin ${ZINIT_ICE[ver]:-master} |& \
+    command git pull --no-stat ${=ice[pullopts]:---ff-only} origin ${ice[ver]:-master} |& \
     command egrep -v '(FETCH_HEAD|up to date\.|From.*://)' && \
     command mv "$subfolder"/* . 2>/dev/null && \
     command rm -rf "${subfolder%%/*}"
@@ -49,8 +55,8 @@ else
   fi
   # from .zinit-setup-plugin-dir()
   :zinit-git-clone() {
-    command git clone --progress --no-checkout ${ZINIT_ICE[cloneopts]} \
-      --depth ${ZINIT_ICE[depth]:-10} \
+    command git clone --progress --no-checkout ${ice[cloneopts]} \
+      --depth ${ice[depth]:-10} \
       "$git_url" "$directory" \
       --config transfer.fsckobjects=false \
       --config receive.fsckobjects=false \
@@ -72,7 +78,6 @@ fi
 return $?
 }
 # ]]]
-
 # TODO(lk): patch .zinit-update-or-status-snippet(), fix zinit status?
 
-# vim: set expandtab filetype=zsh shiftwidth=2 softtabstop=2 tabstop=2:
+# vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker
