@@ -1,6 +1,7 @@
 #!/usr/bin/env zsh
 
 (( ${+functions[.zinit-mirror-using-svn]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-install.zsh"
+(( ${+functions[.zinit-update-or-status-snippet]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-autoload.zsh"
 # FUNCTION: .zinit-mirror-using-svn (patched) [[[
 # Used to clone subdirectories from Github. If in update mode
 # (see $2), then invokes `git pull', in normal mode invokes
@@ -78,6 +79,51 @@ fi
 return $?
 }
 # ]]]
-# TODO(lk): patch .zinit-update-or-status-snippet(), fix zinit status?
+# FUNCTION: .zinit-update-or-status-snippet (patch) [[[
+#
+# Implements update or status operation for snippet given by URL.
+#
+# $1 - "status" or "update"
+# $2 - snippet URL
+.zinit-update-or-status-snippet() {
+  local st="$1" URL="${2%/}" local_dir filename is_snippet
+  local -A ice ice2
+
+  (( ${+ICE} )) && ice=("${(kv)ICE[@]}") || ice=("${(kv)ZINIT_ICE[@]}")
+
+  (( ${#ice[@]} > 0 )) && { ZINIT_SICE[$URL]=""; local nf="-nftid"; }
+  .zinit-compute-ice "$URL" "pack$nf" \
+    ice2 local_dir filename is_snippet || return 1
+
+  integer retval
+
+  if [[ "$st" = "status" ]]; then
+    if (( ${+ice2[svn]} )); then
+      builtin print -r -- "${ZINIT[col-info]}Status for ${${${local_dir:h}:t}##*--}/${local_dir:t}${ZINIT[col-rst]}"
+      ( builtin cd -q "$local_dir"; command git status )
+      # ( builtin cd -q "$local_dir"; command git log -1 --pretty="%h %s" && command ls -lh )
+      # .zinit-mirror-using-svn "$URL" "-t" "$local_dir" || true
+      retval=$?
+      builtin print
+    else
+      builtin print -r -- "${ZINIT[col-info]}Status for ${${local_dir:h}##*--}/$filename${ZINIT[col-rst]}"
+      ( builtin cd -q "$local_dir"; command ls -lth $filename )
+      retval=$?
+      builtin print
+    fi
+  else
+    (( ${+functions[.zinit-setup-plugin-dir]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-install.zsh"
+    (( ${+ICE} )) && ICE=( "${(kv)ice2[@]}" )
+    .zinit-update-snippet "${ice2[teleid]:-$URL}"
+    retval=$?
+  fi
+
+  (( ${+ICE} )) && ICE=() || ZINIT_ICE=()
+  if (( PUPDATE && ZINIT[annex-multi-flag:pull-active] > 0 )) {
+    builtin print ${ZINIT[annex-multi-flag:pull-active]} >! $PUFILE.ind
+  }
+  return $retval
+}
+# ]]]
 
 # vim: ft=zsh sw=2 ts=2 et foldmarker=[[[,]]] foldmethod=marker
