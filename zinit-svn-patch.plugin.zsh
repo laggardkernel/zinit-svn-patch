@@ -1,5 +1,13 @@
 #!/usr/bin/env zsh
 
+if [[ -z "${ZINIT[GIT_PROCESS_SCRIPT]}" ]]; then
+  if [[ -f "${ZINIT[BIN_DIR]}/share/git-process-output.zsh" ]]; then
+    ZINIT[GIT_PROCESS_SCRIPT]="${ZINIT[BIN_DIR]}/share/git-process-output.zsh"
+  else
+    ZINIT[GIT_PROCESS_SCRIPT]="${ZINIT[BIN_DIR]}/git-process-output.zsh"
+  fi
+fi
+
 (( ${+functions[.zinit-mirror-using-svn]} )) || builtin source ${ZINIT[BIN_DIR]}"/zinit-install.zsh"
 # FUNCTION: .zinit-mirror-using-svn (patched) [[[
 # Used to clone subdirectories from Github. If in update mode
@@ -64,7 +72,7 @@ else
       --config submodule.recurse=false
     unfunction :zinit-git-clone
   }
-  :zinit-git-clone |& { command ${ZINIT[BIN_DIR]}/git-process-output.zsh || cat; }
+  :zinit-git-clone |& { command "${ZINIT[GIT_PROCESS_SCRIPT]}" || cat; }
   (( pipestatus[1] )) && return ${pipestatus[1]}
   (
     () { setopt localoptions noautopushd; builtin cd -q "$directory"; }
